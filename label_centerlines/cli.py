@@ -126,6 +126,7 @@ def main(
         ):
             # output is split up into parts of single part geometries to meet
             # GeoPackage requirements
+            
             for part in task.result():
                 feature, elapsed = part
                 if "geometry" in feature:
@@ -137,6 +138,8 @@ def main(
                     )
                 if verbose:
                     tqdm.tqdm.write("%ss: %s" % (elapsed, feature["properties"]))
+            del tasks[task]
+            del task
 
 
 def _feature_worker(
