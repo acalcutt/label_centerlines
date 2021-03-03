@@ -138,8 +138,6 @@ def main(
                     )
                 if verbose:
                     tqdm.tqdm.write("%ss: %s" % (elapsed, feature["properties"]))
-            del tasks[task]
-            del task
 
 
 def _feature_worker(
