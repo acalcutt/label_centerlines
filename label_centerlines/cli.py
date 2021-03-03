@@ -78,9 +78,14 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help="show debug log messages"
 )
+@click.option(
+    "--max_threads",
+    help="maximum number of threads to use. None or unspecified will use core count."
+    default="None"
+)
 def main(
     input_path, output_path, segmentize_maxlen, max_points, simplification,
-    smooth, output_driver, verbose, debug
+    smooth, output_driver, verbose, debug, max_threads
 ):
     """
     Read features, convert to centerlines and write to output.
@@ -104,7 +109,7 @@ def main(
                 ), crs=src.crs, driver=output_driver
                 )
         )
-        executor = es.enter_context(concurrent.futures.ProcessPoolExecutor())
+        executor = es.enter_context(concurrent.futures.ProcessPoolExecutor(max_threads))
 
         tasks = (
             executor.submit(
