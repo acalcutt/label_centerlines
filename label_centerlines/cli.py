@@ -80,8 +80,9 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--max_threads",
-    help="maximum number of threads to use. None or unspecified will use core count.",
-    default="None"
+    type=int,
+    help="maximum number of threads to use.",
+    default=0
 )
 def main(
     input_path, output_path, segmentize_maxlen, max_points, simplification,
