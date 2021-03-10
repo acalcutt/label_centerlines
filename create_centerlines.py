@@ -114,20 +114,20 @@ def main(args):
                     feature_count += 1
                     if output:
                         out_centerlines.write(output)
-                        print "written feature %s: %s" %(
+                        print("written feature %s: %s" %(
                             feature_count,
                             feature_name
-                            )
+                            ))
                     else:
-                        print "Invalid output for feature", feature_name
+                        print("Invalid output for feature", feature_name)
             except KeyboardInterrupt:
-                print "Caught KeyboardInterrupt, terminating workers"
+                print("Caught KeyboardInterrupt, terminating workers")
                 pool.terminate()
             except Exception as e:
                 if feature_name:
-                    print ("%s: FAILED (%s)" %(feature_name, e))
+                    print(("%s: FAILED (%s)" %(feature_name, e)))
                 else:
-                    print ("feature: FAILED (%s)" %(e))
+                    print(("feature: FAILED (%s)" %(e)))
                 raise
             finally:
                 pool.close()
@@ -150,7 +150,7 @@ def worker(
         else:
             feature_name = None
     if feature_name:
-        print "processing", feature_name
+        print("processing", feature_name)
     try:
         centerlines_geom = get_centerlines_from_geom(
             geom,
@@ -160,7 +160,7 @@ def worker(
             smooth_sigma=smooth_sigma
             )
     except TypeError as e:
-        print e
+        print(e)
     except:
         raise
     if centerlines_geom:

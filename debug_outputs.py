@@ -98,7 +98,7 @@ def main(args):
                 "voronoi": [],
                 "centerline": []
                 }
-            print len(regions), "features"
+            print(len(regions), "features")
             for region in regions:
                 progress_counter += 1
                 pbar.update(progress_counter)
@@ -130,9 +130,9 @@ def main(args):
                     failed_features.append(region['properties']['name'])
             pbar.finish()
             if len(failed_features) > 0:
-                print "failed:"
+                print("failed:")
                 for feature in failed_features:
-                    print feature
+                    print(feature)
 
     out_schema = {
         "geometry": "GeometryCollection",
@@ -148,7 +148,7 @@ def main(args):
         driver="GeoJSON"
         ) as debug_file:
 
-        for step, output in debug_outputs.iteritems():
+        for step, output in debug_outputs.items():
             for item in output:
                 debug_feature = {
                     "geometry": mapping(item),

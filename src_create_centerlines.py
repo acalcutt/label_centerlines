@@ -33,7 +33,7 @@ from shapely.geometry import (
     mapping
     )
 from shapely.wkt import loads
-import ogr
+from osgeo import ogr
 from scipy.spatial import Voronoi
 import networkx as nx
 from itertools import combinations
@@ -172,7 +172,7 @@ def smooth_linestring(linestring, smooth_sigma):
         smooth_sigma)
         )
     smoothed_coords = np.hstack((smooth_x, smooth_y))
-    smoothed_coords = zip(smooth_x, smooth_y)
+    smoothed_coords = list(zip(smooth_x, smooth_y))
     linestring_smoothed = LineString(smoothed_coords)
     return linestring_smoothed
 
@@ -187,7 +187,7 @@ def get_longest_paths(nodes, graph):
     for node1, node2 in possible_paths:
         try:
             path = nx.shortest_path(graph, node1, node2, "weight")
-        except Exception,e:
+        except Exception as e:
             path = []
         if len(path)>1:
             distance = get_path_distance(path, graph)
@@ -253,8 +253,8 @@ def get_end_nodes(graph):
     """
     nodelist = [
         i
-        for i in graph.nodes_iter()
-        if len(graph.neighbors(i))==1
+        for i in list(graph.nodes())
+        if len(list(graph.neighbors(i)))==1
         ]
     return nodelist
 
