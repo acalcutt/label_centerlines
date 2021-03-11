@@ -36,6 +36,7 @@ from shapely.wkt import loads
 from osgeo import ogr
 from scipy.spatial import Voronoi
 import networkx as nx
+from networkx.exception import NetworkXNoPath
 from itertools import combinations
 import numpy as np
 from scipy.ndimage import filters
@@ -177,26 +178,19 @@ def smooth_linestring(linestring, smooth_sigma):
     return linestring_smoothed
 
 
-def get_longest_paths(nodes, graph):
-    """
-    Returns longest path of all possible paths between a list of nodes.
-    """
-    paths = []
-    distances = []
-    possible_paths = list(combinations(nodes, r=2))
-    for node1, node2 in possible_paths:
-        try:
-            path = nx.shortest_path(graph, node1, node2, "weight")
-        except Exception as e:
-            path = []
-        if len(path)>1:
-            distance = get_path_distance(path, graph)
-            paths.append(path)
-            distances.append(distance)
-    paths_sorted = [x for (y,x) in sorted(zip(distances, paths), reverse=True)]
-    # longest_path = paths_sorted[0]
-    # return longest_path
-    return paths_sorted
+def get_longest_paths(nodes, graph, maxnum=5):
+    """Return longest paths of all possible paths between a list of nodes."""
+    def _gen_paths_distances():
+        for node1, node2 in combinations(nodes, r=2):
+            try:
+                yield nx.single_source_dijkstra(
+                    G=graph, source=node1, target=node2, weight="weight"
+                )
+            except NetworkXNoPath:
+                continue
+    return [
+        x for (y, x) in sorted(_gen_paths_distances(), reverse=True)
+    ][:maxnum]
 
 
 def get_least_curved_path(paths, vertices):
@@ -235,66 +229,44 @@ def get_angle(line1, line2):
     angle = np.math.atan2(np.linalg.det([v1,v2]),np.dot(v1,v2))
     return np.degrees(angle)
 
-def get_path_distance(path, graph):
-    """
-    Returns weighted path distance.
-    """
-    distance = 0
-    for i,w in enumerate(path):
-        j=i+1
-        if j<len(path):
-            distance += round(graph.edges[path[i]][path[j]]["weight"], 6)
-    return distance
-
 
 def get_end_nodes(graph):
-    """
-    Returns list of nodes with just one neighbor node.
-    """
-    nodelist = [
-        i
-        for i in list(graph.nodes())
-        if len(list(graph.neighbors(i)))==1
-        ]
-    return nodelist
+    """Return list of nodes with just one neighbor node."""
+    return [i for i in graph.nodes() if len(list(graph.neighbors(i))) == 1]
 
 
 def graph_from_voronoi(vor, geometry):
-    """
-    Creates a networkx graph out of all Voronoi ridge vertices which are inside
-    the original geometry.
-    """
+    """Return networkx.Graph from Voronoi diagram within geometry."""
     graph = nx.Graph()
-    for i in vor.ridge_vertices:
-        if i[0]>-1 and i[1]>-1:
-            point1 = Point(vor.vertices[i][0])
-            point2 = Point(vor.vertices[i][1])
-            # Eliminate all points outside our geometry.
-            if point1.within(geometry) and point2.within(geometry):
-                dist = point1.distance(point2)
-                graph.add_nodes_from([i[0], i[1]])
-                graph.add_edge(i[0], i[1], weight=dist)
+    for x, y, dist in _yield_ridge_vertices(vor, geometry, dist=True):
+        graph.add_nodes_from([x, y])
+        graph.add_edge(x, y, weight=dist)
     return graph
 
 
 def multilinestring_from_voronoi(vor, geometry):
-    """
-    Creates a MultiLineString geometry out of all Voronoi ridge vertices which
-    are inside the original geometry.
-    """
-    linestrings = []
-    for i in vor.ridge_vertices:
-        if i[0]>-1 and i[1]>-1:
-            point1 = Point(vor.vertices[i][0])
-            point2 = Point(vor.vertices[i][1])
-            # Eliminate all points outside our geometry.
-            if point1.within(geometry) and point2.within(geometry):
-                linestring = LineString([point1, point2])
-                linestrings.append(linestring)
-    multilinestring = MultiLineString(linestrings)
-    return multilinestring
+    """Return MultiLineString geometry from Voronoi diagram."""
+    return MultiLineString([
+        LineString([
+            Point(vor.vertices[[x, y]][0]),
+            Point(vor.vertices[[x, y]][1])
+        ])
+        for x, y in _yield_ridge_vertices(vor, geometry)
+    ])
 
-
+def _yield_ridge_vertices(vor, geometry, dist=False):
+    """Yield Voronoi ridge vertices within geometry."""
+    for x, y in vor.ridge_vertices:
+        if x < 0 or y < 0:
+            continue
+        point1 = Point(vor.vertices[[x, y]][0])
+        point2 = Point(vor.vertices[[x, y]][1])
+        # Eliminate all points outside our geometry.
+        if point1.within(geometry) and point2.within(geometry):
+            if dist:
+                yield x, y, point1.distance(point2)
+            else:
+                yield x, y
 
 if __name__ == "__main__":
         main(sys.argv[1:])
