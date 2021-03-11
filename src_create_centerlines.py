@@ -243,7 +243,7 @@ def get_path_distance(path, graph):
     for i,w in enumerate(path):
         j=i+1
         if j<len(path):
-            distance += round(graph.edge[path[i]][path[j]]["weight"], 6)
+            distance += round(graph.edges[path[i]][path[j]]["weight"], 6)
     return distance
 
 
